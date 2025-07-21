@@ -1,8 +1,10 @@
 <?php
 // Datos de conexión
 $host = "localhost";        // O el nombre de tu servidor
-$usuario = "root";          // Usuario de MySQL
-$contrasena = "";           // Contraseña (vacía si estás en XAMPP)
+/* $usuario = "root";          // Usuario de MySQL
+$contrasena = "";           // Contraseña (vacía si estás en XAMPP) */
+$usuario = "ErickCer1818";          // Usuario de MySQL
+$contrasena = "ElManCertifica18#";           // Contraseña (vacía si estás en XAMPP)
 $base_datos = "denuncias_db";
 
 // Crear conexión
