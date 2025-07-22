@@ -39,24 +39,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $correoEnviado = $correoDenuncia->sendConfirmacion($cuerpo, $correo, $asunto);
 
-        var_dump($correoEnviado);
-        exit; {
-        // ✅ Insertar respuesta en la tabla
+    if ($correoEnviado) {
+        // ✅ Insertar respuesta en la base de datos
         $sql = "INSERT INTO respuestas (id_denuncia, mensaje, fecha_respuesta) VALUES (?, ?, NOW())";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("is", $id, $respuesta);
-        if ($stmt->execute()) {
-            echo "✅ Guardado en base de datos.";
-        } else {
-            echo "❌ Error al guardar: " . $stmt->error;
-        }
-        exit;
-        /* $stmt->execute(); */
-    }
 
-    // Redirigir de vuelta con mensaje
-    header("Location: ver_denuncia.php?id=$id&enviado=ok");
-    exit;
+        if ($stmt->execute()) {
+            // Todo bien, redirigimos
+            header("Location: ver_denuncia.php?id=$id&enviado=ok");
+            exit;
+        } else {
+            echo "❌ Error al guardar en BD: " . $stmt->error;
+            exit;
+        }
+    } else {
+        echo "❌ El correo no se pudo enviar.";
+        exit;
+    }
 } else {
     echo "⚠️ Acceso no válido.";
 }
