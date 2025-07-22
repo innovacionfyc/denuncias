@@ -5,7 +5,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 class CorreoDenuncia {
-    public function sendConfirmacion($message, $receiver, $subject = "Respuesta del equipo") {
+    public function sendConfirmacion($nombre, $correo, $idDenuncia, $subject = "Respuesta del equipo") {
         $mail = new PHPMailer(true);
 
         try {
