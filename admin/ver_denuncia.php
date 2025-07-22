@@ -32,13 +32,12 @@ $stmt2->bind_param("i", $id);
 $stmt2->execute();
 $archivos = $stmt2->get_result();
 
-// 3. Obtener respuesta (si existe)
-$sqlRespuesta = "SELECT * FROM respuestas WHERE id_denuncia = ? ORDER BY fecha_respuesta DESC LIMIT 1";
-$stmt3 = $conn->prepare($sqlRespuesta);
+// 3. Obtener todas las respuestas
+$sqlRespuestas = "SELECT * FROM respuestas WHERE id_denuncia = ? ORDER BY fecha_respuesta ASC";
+$stmt3 = $conn->prepare($sqlRespuestas);
 $stmt3->bind_param("i", $id);
 $stmt3->execute();
-$respuestaResultado = $stmt3->get_result();
-$respuesta = $respuestaResultado->fetch_assoc();
+$respuestas = $stmt3->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -64,46 +63,48 @@ $respuesta = $respuestaResultado->fetch_assoc();
         </div>
 
         <div class="mt-6">
-            <h2 class="text-lg font-semibold mb-2">📌 Archivos:</h2>
+            <h2 class="text-lg font-semibold mb-2">📎 Archivos:</h2>
             <div class="grid grid-cols-2 gap-4">
                 <?php while ($archivo = $archivos->fetch_assoc()): ?>
                     <?php if ($archivo['tipo'] === 'foto'): ?>
                         <img src="../<?php echo $archivo['ruta_archivo']; ?>" class="w-full h-auto rounded border" alt="Imagen">
                     <?php elseif ($archivo['tipo'] === 'audio'): ?>
-                        <audio controls class="w-full">
+                        <audio controls class="w-full mt-2">
                             <source src="../<?php echo $archivo['ruta_archivo']; ?>" type="audio/mpeg">
-                            Tu navegador no soporta audio.
+                            Tu navegador no soporta el elemento de audio.
                         </audio>
                     <?php endif; ?>
                 <?php endwhile; ?>
             </div>
         </div>
 
-        <?php if ($respuesta): ?>
+        <?php if ($respuestas->num_rows > 0): ?>
             <div class="mt-6">
-                <h2 class="text-lg font-semibold mb-2">📬 Respuesta enviada:</h2>
-                <div class="border p-4 bg-green-50 rounded">
-                    <?php echo nl2br(htmlspecialchars($respuesta['mensaje'])); ?>
-                    <p class="mt-2 text-sm text-gray-600">🗓 Enviada el: <?php echo $respuesta['fecha_respuesta']; ?></p>
-                </div>
+                <h2 class="text-lg font-semibold mb-2">📬 Respuestas enviadas:</h2>
+                <?php while ($respuesta = $respuestas->fetch_assoc()): ?>
+                    <div class="border p-4 bg-green-50 rounded mb-4">
+                        <?php echo nl2br(htmlspecialchars($respuesta['mensaje'])); ?>
+                        <p class="mt-2 text-sm text-gray-600">📅 Enviada el: <?php echo $respuesta['fecha_respuesta']; ?></p>
+                    </div>
+                <?php endwhile; ?>
             </div>
-        <?php else: ?>
-            <hr class="my-6">
-
-            <h2 class="text-xl font-semibold mb-2">✉️ Responder al denunciante</h2>
-
-            <form action="responder_correo.php" method="POST" class="space-y-4">
-                <input type="hidden" name="correo" value="<?= htmlspecialchars($denuncia['correo']) ?>">
-                <input type="hidden" name="nombre" value="<?= htmlspecialchars($denuncia['nombre']) ?>">
-                <input type="hidden" name="id_denuncia" value="<?= $denuncia['id'] ?>">
-
-                <textarea name="respuesta" rows="6" class="w-full border rounded p-2" placeholder="Escribe tu respuesta..."></textarea>
-
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Enviar respuesta
-                </button>
-            </form>
         <?php endif; ?>
+
+        <hr class="my-6">
+
+        <h2 class="text-xl font-semibold mb-2">✉️ Responder al denunciante</h2>
+
+        <form action="responder_correo.php" method="POST" class="space-y-4">
+            <input type="hidden" name="correo" value="<?= htmlspecialchars($denuncia['correo']) ?>">
+            <input type="hidden" name="nombre" value="<?= htmlspecialchars($denuncia['nombre']) ?>">
+            <input type="hidden" name="id_denuncia" value="<?= $denuncia['id'] ?>">
+
+            <textarea name="respuesta" rows="6" class="w-full border rounded p-2" placeholder="Escribe tu respuesta..."></textarea>
+
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Enviar respuesta
+            </button>
+        </form>
 
         <div class="mt-6">
             <a href="dashboard.php" class="text-blue-600 hover:underline">← Volver al panel</a>
