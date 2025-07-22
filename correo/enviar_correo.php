@@ -5,7 +5,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 class CorreoDenuncia {
-    public function sendConfirmacion($nombre, $correo, $idDenuncia) {
+        public function send($message, $receiver, $subject = "Respuesta del equipo") {
         $mail = new PHPMailer(true);
 
         try {
@@ -30,7 +30,7 @@ class CorreoDenuncia {
             $mail->Username = "it@fycconsultores.com";
             $mail->Password = "ecym cwbl dfkg maea";
 
-            $mail->Subject = "Confirmación de tu denuncia #$idDenuncia";
+            $mail->Subject = $subject;
             $mail->addAddress($correo, $nombre);
             $mail->CharSet = 'UTF-8';
 
