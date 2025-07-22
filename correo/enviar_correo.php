@@ -5,7 +5,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 class CorreoDenuncia {
-    public function sendConfirmacion($nombre, $correo, $idDenuncia, $subject = "Respuesta del equipo") {
+    public function sendConfirmacion($nombre, $correo, $id_denuncia, $subject = "Respuesta del equipo") {
         $mail = new PHPMailer(true);
 
         try {
@@ -36,13 +36,13 @@ class CorreoDenuncia {
 
             $mensaje = "
                 <h2>Hola, $nombre</h2>
-                <p>Hemos recibido tu denuncia con el ID <strong>$idDenuncia</strong>.</p>
+                <p>Hemos recibido tu denuncia con el ID <strong>$id_denuncia</strong>.</p>
                 <p>La estamos evaluando y te notificaremos cuando cambie el estado.</p>
                 <p>Gracias por tu confianza.</p>
             ";
 
             $mail->MsgHTML($mensaje);
-            $mail->AltBody = "Hemos recibido tu denuncia #$idDenuncia. Te avisaremos cuando cambie el estado.";
+            $mail->AltBody = "Hemos recibido tu denuncia #$id_denuncia. Te avisaremos cuando cambie el estado.";
 
             $mail->send();
 
