@@ -10,6 +10,7 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 require_once "../correo/enviar_correo.php";
+require_once "../db/conexion.php";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $correo = $_POST['correo'];
@@ -36,7 +37,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <p>Gracias por confiar en nuestro equipo.</p>
     ";
 
-    $correoDenuncia->sendConfirmacion($cuerpo, $correo, $asunto);
+    $correoEnviado = $correoDenuncia->sendConfirmacion($cuerpo, $correo, $asunto);
+
+    if ($correoEnviado) {
+        // ✅ Insertar respuesta en la tabla
+        $sql = "INSERT INTO respuestas (id_denuncia, mensaje, fecha_respuesta) VALUES (?, ?, NOW())";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("is", $id, $respuesta);
+        $stmt->execute();
+    }
 
     // Redirigir de vuelta con mensaje
     header("Location: ver_denuncia.php?id=$id&enviado=ok");
