@@ -39,12 +39,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $correoEnviado = $correoDenuncia->sendConfirmacion($cuerpo, $correo, $asunto);
 
-    if ($correoEnviado) {
+        var_dump($correoEnviado);
+        exit; {
         // ✅ Insertar respuesta en la tabla
         $sql = "INSERT INTO respuestas (id_denuncia, mensaje, fecha_respuesta) VALUES (?, ?, NOW())";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("is", $id, $respuesta);
-        $stmt->execute();
+        if ($stmt->execute()) {
+            echo "✅ Guardado en base de datos.";
+        } else {
+            echo "❌ Error al guardar: " . $stmt->error;
+        }
+        exit;
+        /* $stmt->execute(); */
     }
 
     // Redirigir de vuelta con mensaje
