@@ -19,5 +19,6 @@ if ($conn->connect_error) {
 $conn->set_charset("utf8mb4");
 
 // Puedes dejar esto como prueba para saber si se conectó bien
-echo "✅ Conexión exitosa a la base de dato";
+/* echo "✅ Conexión exitosa a la base de datos";
 ?>
+ */
