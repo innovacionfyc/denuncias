@@ -6,12 +6,6 @@ require_once "correo/enviar_correo.php";       // Clase para enviar correos
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// 1. Recibir datos del formulario
-/* $nombre   = $_POST['nombre'] ?? null;
-$cedula   = $_POST['cedula'] ?? null;
-$correo   = $_POST['correo'] ?? null;
-$mensaje  = $_POST['mensaje'] ?? null; */
-
 $nombre  = isset($_POST['nombre']) ? $_POST['nombre'] : null;
 $cedula  = isset($_POST['cedula']) ? $_POST['cedula'] : null;
 $correo  = isset($_POST['correo']) ? $_POST['correo'] : null;

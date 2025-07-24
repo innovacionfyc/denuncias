@@ -17,7 +17,7 @@ $resultado = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <title>Panel de Denuncias</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="../assets/css/output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 min-h-screen p-8">
     <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow">

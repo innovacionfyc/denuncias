@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Denuncia enviada</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="assets/css/output.css" rel="stylesheet">
 </head>
 <body class="bg-green-50 min-h-screen flex items-center justify-center">
     <div class="bg-white shadow-md rounded p-6 max-w-lg text-center">

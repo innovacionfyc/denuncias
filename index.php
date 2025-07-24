@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Denuncia anónima o personal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="assets/css/output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 flex justify-center items-center min-h-screen">
-
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-xl">
         <h1 class="text-2xl font-bold mb-6 text-center">Formulario de Denuncia</h1>
 

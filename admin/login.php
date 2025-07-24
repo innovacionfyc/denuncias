@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <title>Login - Administrador</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="../assets/css/output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 flex justify-center items-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
