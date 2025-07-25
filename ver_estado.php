@@ -116,6 +116,33 @@ $denuncia = $resultado->fetch_assoc();
     <?php endif; ?>
   </div>
 
+  <!-- Respuestas del equipo -->
+  <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
+    <h2 class="text-lg font-bold mb-4 text-[#a08e43]">📬 Respuestas del comité</h2>
+    <?php
+    $sqlRespuestasEquipo = "SELECT * FROM respuestas WHERE id_denuncia = ? ORDER BY fecha_respuesta ASC";
+    $stmtEquipo = $conn->prepare($sqlRespuestasEquipo);
+    $stmtEquipo->bind_param("i", $denuncia['id']);
+    $stmtEquipo->execute();
+    $respsEquipo = $stmtEquipo->get_result();
+
+    if ($respsEquipo->num_rows > 0):
+      while ($r = $respsEquipo->fetch_assoc()):
+    ?>
+        <div class="mb-4 bg-green-50 border border-gray-300 rounded p-4">
+          <?= nl2br(htmlspecialchars($r['mensaje'])) ?>
+          <p class="text-sm text-gray-500 mt-2">📅 <?= $r['fecha_respuesta'] ?></p>
+        </div>
+    <?php
+      endwhile;
+    else:
+      echo "<p class='text-gray-600'>Aún no has recibido respuestas del comité.</p>";
+    endif;
+    ?>
+  </div>
+
+
+
   <!-- Respuestas del denunciante -->
   <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
     <h2 class="text-lg font-bold mb-4 text-[#942934]">✍️ Tus respuestas</h2>
