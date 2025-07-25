@@ -7,7 +7,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="assets/css/output.css" rel="stylesheet">
 </head>
-<body class="bg-[#f8f9fb] min-h-screen p-4 flex items-center justify-center">
+<body class="bg-[#f8f9fb] min-h-screen p-4 flex items-center justify-center flex-col">
+
+<?php if (isset($_GET['mensaje'])): ?>
+  <div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded relative text-sm mb-6 animate-pulse text-center max-w-2xl w-full">
+    <?= htmlspecialchars($_GET['mensaje']) ?>
+  </div>
+<?php endif; ?>
+
 
 <?php
 $id = isset($_GET['id']) ? $_GET['id'] : null;
@@ -31,7 +38,7 @@ if (!$id):
   exit;
 endif;
 
-// Buscar la denuncia
+// 1. Buscar la denuncia
 $sql = "SELECT * FROM denuncias WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);
@@ -69,6 +76,11 @@ $denuncia = $resultado->fetch_assoc();
     <div class="bg-gray-50 border border-gray-300 p-4 rounded-lg mt-2 whitespace-pre-line">
       <?= htmlspecialchars($denuncia['mensaje']) ?>
     </div>
+
+    <?php if (!empty($denuncia['firma'])): ?>
+      <p class="mt-4"><strong>Firma:</strong></p>
+      <img src="<?= htmlspecialchars($denuncia['firma']) ?>" alt="Firma del colaborador" class="w-60 border mt-2 rounded shadow">
+    <?php endif; ?>
   </div>
 
   <!-- Archivos -->
@@ -103,6 +115,48 @@ $denuncia = $resultado->fetch_assoc();
       <p class="text-gray-600">No se subieron archivos.</p>
     <?php endif; ?>
   </div>
+
+  <!-- Respuestas del denunciante -->
+  <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
+    <h2 class="text-lg font-bold mb-4 text-[#942934]">✍️ Tus respuestas</h2>
+    <?php
+    $sqlRespuestas = "SELECT * FROM respuestas_denunciante WHERE id_denuncia = ? ORDER BY fecha ASC";
+    $stmtResp = $conn->prepare($sqlRespuestas);
+    $stmtResp->bind_param("i", $denuncia['id']);
+    $stmtResp->execute();
+    $resps = $stmtResp->get_result();
+
+    if ($resps->num_rows > 0):
+      while ($r = $resps->fetch_assoc()):
+    ?>
+        <div class="mb-4 bg-gray-50 border border-gray-300 rounded p-4">
+          <?= nl2br(htmlspecialchars($r['mensaje'])) ?>
+          <p class="text-sm text-gray-500 mt-2">📅 <?= $r['fecha'] ?></p>
+        </div>
+    <?php
+      endwhile;
+    else:
+      echo "<p class='text-gray-600'>Aún no has enviado respuestas adicionales.</p>";
+    endif;
+    ?>
+  </div>
+
+  <!-- Formulario de respuesta (solo si en proceso) -->
+  <?php if ($denuncia['estado'] === 'en_proceso'): ?>
+    <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
+      <h2 class="text-lg font-bold mb-4 text-[#685f2f]">📨 Enviar una nueva respuesta</h2>
+      <form action="responder_denunciante.php" method="POST" class="space-y-4">
+        <input type="hidden" name="id_denuncia" value="<?= $denuncia['id'] ?>">
+        <textarea name="mensaje" rows="5" required
+          class="w-full border border-gray-300 rounded-lg p-3 placeholder:text-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57] invalid:border-red-500"
+          placeholder="Escribe tu respuesta..."></textarea>
+        <button type="submit"
+          class="bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
+          Enviar respuesta
+        </button>
+      </form>
+    </div>
+  <?php endif; ?>
 
 </div>
 

@@ -62,6 +62,6 @@ $correoDenuncia = new CorreoDenuncia();
 $correoDenuncia->sendConfirmacion($nombre, $correo, $id_denuncia);
 
 // 6. Redirigir
-header("Location: denuncia_enviada.php");
+header("Location: denuncia_enviada.php?id=" . $id_denuncia);
 exit;
 ?>
