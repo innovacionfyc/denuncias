@@ -6,13 +6,11 @@ error_reporting(E_ALL);
 session_start();
 require_once "../db/conexion.php";
 
-// Verificar si se envió el formulario
 $error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usuario = $_POST['usuario'];
     $contrasena = $_POST['contrasena'];
 
-    // Buscar el usuario
     $sql = "SELECT * FROM usuarios WHERE usuario = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $usuario);
@@ -24,7 +22,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $hash_enviado = hash("sha256", $contrasena);
 
         if ($fila['contrasena'] === $hash_enviado) {
-            // Guardar sesión y redirigir
             $_SESSION['usuario'] = $usuario;
             header("Location: dashboard.php");
             exit;
@@ -44,26 +41,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Login - Administrador</title>
     <link href="../assets/css/output.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 flex justify-center items-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-        <h2 class="text-2xl font-bold text-center mb-6">Ingreso al sistema</h2>
+    <body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
+      <div class="bg-white w-full max-w-[400px] p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-300 flex flex-col items-center">
+      
+          <!-- 🦉 Búho -->
+          <img src="../assets/img/Ovi6.gif" alt="Búho F&C" class="w-24 sm:w-28 h-auto mb-4">
 
-        <?php if (!empty($error)): ?>
-            <div class="bg-red-100 text-red-700 p-3 mb-4 rounded"><?php echo $error; ?></div>
-        <?php endif; ?>
+          <h2 class="text-2xl font-bold text-center mb-6 text-[#942934]">Ingreso al sistema</h2>
 
-        <form method="POST" class="space-y-4">
-            <input type="text" name="usuario" placeholder="Usuario"
-                   class="w-full border border-gray-300 rounded px-4 py-2" required>
+          <?php if (!empty($error)): ?>
+              <div class="bg-red-100 text-red-700 p-3 mb-4 rounded border border-red-300 animate-pulse w-full text-sm">
+                  <?php echo $error; ?>
+              </div>
+          <?php endif; ?>
 
-            <input type="password" name="contrasena" placeholder="Contraseña"
-                   class="w-full border border-gray-300 rounded px-4 py-2" required>
+          <form method="POST" class="space-y-4 w-full">
+              <input type="text" name="usuario" placeholder="Usuario"
+                  class="w-full border border-gray-300 rounded-xl px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:ring-2 focus:ring-[#d32f57]"
+                  required>
 
-            <button type="submit"
-                    class="bg-blue-600 text-white font-semibold px-6 py-2 rounded hover:bg-blue-700 w-full">
-                Ingresar
-            </button>
-        </form>
-    </div>
-</body>
+              <input type="password" name="contrasena" placeholder="Contraseña"
+                  class="w-full border border-gray-300 rounded-xl px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:ring-2 focus:ring-[#d32f57]"
+                  required>
+
+              <button type="submit"
+                  class="w-full bg-[#d32f57] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98] hover:bg-[#942934]">
+                  Ingresar
+              </button>
+          </form>
+      </div>
+    </body>
+
 </html>

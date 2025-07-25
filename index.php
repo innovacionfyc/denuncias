@@ -8,7 +8,7 @@
 </head>
 <body class="bg-[#f8f9fb] flex justify-center items-center min-h-screen p-4">
 
-  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-xl space-y-6 border border-gray-300">
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-5xl space-y-6 border border-gray-300">
     <h1 class="text-2xl font-bold text-center text-[#942934]">Formulario de Denuncia</h1>
 
     <?php if (isset($_GET['error'])): ?>

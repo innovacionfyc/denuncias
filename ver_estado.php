@@ -65,7 +65,7 @@ $denuncia = $resultado->fetch_assoc();
 ?>
 
 <!-- Detalles de la denuncia -->
-<div class="w-full max-w-2xl space-y-6">
+<div class="w-full max-w-5xl space-y-6">
 
   <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-300">
     <h2 class="text-xl font-bold mb-4 text-[#685f2f]">📋 Detalles de tu denuncia #<?= htmlspecialchars($denuncia['id']) ?></h2>
