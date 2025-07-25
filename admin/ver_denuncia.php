@@ -24,7 +24,6 @@ if ($resultado->num_rows != 1) {
 
 $denuncia = $resultado->fetch_assoc();
 
-// Verificar si se envío el mensaje correctamente
 $mensajeEnviado = isset($_GET['enviado']) && $_GET['enviado'] === 'ok';
 
 $sqlArchivos = "SELECT * FROM archivos WHERE id_denuncia = ?";
@@ -56,12 +55,6 @@ $respsDenunciante = $stmt4->get_result();
 <body class="bg-[#f8f9fb] min-h-screen p-6 flex justify-center">
     <div class="w-full max-w-6xl bg-white p-8 rounded-2xl shadow-2xl border border-gray-300 space-y-6">
 
-        <?php if ($mensajeEnviado): ?>
-            <div class="bg-green-100 border border-green-300 text-green-800 p-3 rounded-xl text-center animate-pulse">
-                ✅ Respuesta enviada exitosamente al denunciante.
-            </div>
-        <?php endif; ?>
-
         <h1 class="text-2xl font-bold text-[#685f2f]">📄 Denuncia #<?= htmlspecialchars($denuncia['id']) ?></h1>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -90,7 +83,9 @@ $respsDenunciante = $stmt4->get_result();
                 <?php while ($archivo = $archivos->fetch_assoc()): ?>
                     <?php if ($archivo['tipo'] === 'foto'): ?>
                         <div class="bg-white border border-gray-200 rounded-xl shadow-md p-2">
-                            <img src="../<?= $archivo['ruta_archivo'] ?>" alt="Evidencia" class="w-full h-48 object-cover rounded-lg">
+                            <img src="../<?= $archivo['ruta_archivo'] ?>" alt="Evidencia"
+                                 class="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition"
+                                 onclick="ampliarImagen(this.src)">
                         </div>
                     <?php elseif ($archivo['tipo'] === 'audio'): ?>
                         <div class="bg-white border border-gray-200 rounded-xl shadow-md p-4 flex flex-col items-center justify-center">
@@ -109,9 +104,9 @@ $respsDenunciante = $stmt4->get_result();
             <h2 class="text-lg font-semibold text-[#a08e43] mb-2">📬 Respuestas del comité:</h2>
             <?php if ($respuestas->num_rows > 0): ?>
                 <?php while ($respuesta = $respuestas->fetch_assoc()): ?>
-                    <div class="border border-gray-200 p-4 bg-green-50 rounded-xl mb-4 shadow">
+                    <div class="border border-gray-200 p-4 bg-green-50 rounded-xl mb-4 shadow max-w-lg ml-auto">
                         <?= nl2br(htmlspecialchars($respuesta['mensaje'])) ?>
-                        <p class="mt-2 text-sm text-gray-600">📅 <?= $respuesta['fecha_respuesta'] ?></p>
+                        <p class="mt-2 text-sm text-gray-600 text-right">📅 <?= $respuesta['fecha_respuesta'] ?></p>
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
@@ -123,7 +118,7 @@ $respsDenunciante = $stmt4->get_result();
             <h2 class="text-lg font-semibold text-[#942934] mb-2">✍️ Respuestas del denunciante:</h2>
             <?php if ($respsDenunciante->num_rows > 0): ?>
                 <?php while ($r = $respsDenunciante->fetch_assoc()): ?>
-                    <div class="mb-4 bg-gray-50 border border-gray-200 rounded-xl p-4 shadow">
+                    <div class="mb-4 bg-gray-50 border border-gray-200 rounded-xl p-4 shadow max-w-lg mr-auto">
                         <?= nl2br(htmlspecialchars($r['mensaje'])) ?>
                         <p class="text-sm text-gray-500 mt-2">📅 <?= $r['fecha'] ?></p>
                     </div>
@@ -145,12 +140,37 @@ $respsDenunciante = $stmt4->get_result();
                 <button type="submit" class="bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
                     Enviar respuesta
                 </button>
+
+                <?php if ($mensajeEnviado): ?>
+                    <div class="bg-green-100 border border-green-300 text-green-800 p-3 rounded-xl text-center animate-pulse">
+                        ✅ Respuesta enviada exitosamente al denunciante.
+                    </div>
+                <?php endif; ?>
             </form>
         </div>
 
         <div class="text-center pt-6">
             <a href="dashboard.php" class="text-[#942934] hover:underline font-medium">← Volver al panel</a>
         </div>
+
+        <!-- Modal para imagen ampliada -->
+        <div id="modalImagen" class="fixed inset-0 bg-black/80 hidden justify-center items-center z-50">
+            <img id="imagenGrande" class="max-w-4xl max-h-[90vh] rounded-xl shadow-xl border-4 border-white" />
+        </div>
+
+        <script>
+        function ampliarImagen(src) {
+            const modal = document.getElementById('modalImagen');
+            const img = document.getElementById('imagenGrande');
+            img.src = src;
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('modalImagen').addEventListener('click', () => {
+            document.getElementById('modalImagen').classList.add('hidden');
+        });
+        </script>
+
     </div>
 </body>
 </html>
