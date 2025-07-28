@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Formulario de Denuncia</title>
+  <title>QUEJAS DE PRESUNTO ACOSO LABORAL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="assets/css/output.css" rel="stylesheet">
 </head>
 <body class="bg-[#f8f9fb] flex justify-center items-center min-h-screen p-4">
 
   <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-5xl space-y-6 border border-gray-300">
-    <h1 class="text-2xl font-bold text-center text-[#942934]">Formulario de Denuncia</h1>
+    <h1 class="text-2xl font-bold text-center text-[#942934]">QUEJAS DE PRESUNTO ACOSO LABORAL</h1>
 
     <?php if (isset($_GET['error'])): ?>
       <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-sm mb-4 animate-pulse">
@@ -107,7 +107,7 @@
       <div class="flex flex-col sm:flex-row gap-4 pt-4">
         <button type="submit"
           class="w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
-          📝 Enviar denuncia
+          📝 Enviar Comunicación
         </button>
         <a href="ver_estado.php"
           class="w-full bg-[#a08e43] hover:bg-[#685f2f] text-white font-semibold px-6 py-3 rounded-xl text-center transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">

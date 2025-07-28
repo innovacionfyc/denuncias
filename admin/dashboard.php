@@ -76,14 +76,14 @@ $resultado = $stmt->get_result();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Denuncias</title>
+    <title>Panel de Comunicación</title>
     <link href="../assets/css/output.css" rel="stylesheet">
 </head>
 <body class="bg-[#f8f9fb] min-h-screen p-8">
     <div class="max-w-7xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-300 space-y-6">
 
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-[#685f2f]">📋 Panel de Denuncias</h1>
+            <h1 class="text-3xl font-bold text-[#685f2f]">📋 Panel de Comunicación</h1>
             <a href="cerrar_sesion.php" class="text-[#942934] font-semibold hover:underline transition-all duration-200">Cerrar sesión</a>
         </div>
 

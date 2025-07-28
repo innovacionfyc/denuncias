@@ -1,9 +1,17 @@
-<?php require_once "db/conexion.php"; ?>
+<?php 
+require_once "db/conexion.php";
+require_once "correo/enviar_correo.php";
+session_start();
+
+function generarCodigoVerificacion($longitud = 6) {
+  return str_pad(random_int(0, 999999), $longitud, '0', STR_PAD_LEFT);
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Consultar denuncia</title>
+  <title>Consultar Comunicación</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="assets/css/output.css" rel="stylesheet">
 </head>
@@ -17,12 +25,91 @@
 <?php endif; ?>
 
 <?php
+// Paso 1: Formulario inicial de ID y correo
+if (!isset($_POST['verificar']) && !isset($_POST['codigo'])): ?>
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4">
+    <h2 class="text-xl font-bold text-center text-[#942934]">🔐 Consultar estado de Comunicación</h2>
+    <form method="POST" class="space-y-4">
+      <input type="number" name="id" placeholder="ID de la Comunicación" required
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57] invalid:border-red-500" />
+      <input type="email" name="correo" placeholder="Correo electrónico registrado" required
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57] invalid:border-red-500" />
+      <button type="submit" name="verificar"
+        class="w-full bg-[#685f2f] hover:bg-[#a08e43] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
+        Enviar código de verificación
+      </button>
+    </form>
+  </div>
+<?php exit; endif; ?>
+
+<?php
+// Paso 2: Generar y enviar código
+if (isset($_POST['verificar'])) {
+  $id = $_POST['id'];
+  $correo = $_POST['correo'];
+  
+  $stmt = $conn->prepare("SELECT * FROM denuncias WHERE id = ? AND correo = ?");
+  $stmt->bind_param("is", $id, $correo);
+  $stmt->execute();
+  $res = $stmt->get_result();
+
+  if ($res->num_rows === 0) {
+    echo "<div class='bg-white p-6 rounded-xl shadow border border-red-300 text-red-700'>❌ No se encontró ninguna Comunicación con esos datos.</div>";
+    exit;
+  }
+
+  $codigo = generarCodigoVerificacion();
+  $_SESSION['codigo_verificacion'] = $codigo;
+  $_SESSION['id_denuncia'] = $id;
+  $_SESSION['correo_denunciante'] = $correo;
+
+$denuncia = $res->fetch_assoc();
+$nombreReal = $denuncia['nombre'];
+$correoDenuncia = new CorreoDenuncia();
+$asunto = "Código de verificación - Consulta de denuncia #$id";
+
+$mensaje = "
+  <p>Hola, $nombreReal,</p>
+  <p>Tu código para consultar el estado de tu denuncia es:</p>
+  <h2 style='font-size:28px;'>$codigo</h2>
+  <p>Este código es válido por unos minutos.</p>
+";
+
+$correoDenuncia->sendConfirmacion($nombreReal, $correo, $id, $asunto, $mensaje);
+
+
+// Formulario de ingreso de código
+  echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4'>
+    <h2 class='text-xl font-bold text-center text-[#942934]'>📩 Verificación de código</h2>
+    <form method='POST' class='space-y-4'>
+      <input type='text' name='codigo' maxlength='6' placeholder='Código recibido en tu correo' required
+        class='w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57]' />
+      <button type='submit'
+        class='w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]'>
+        Ver Comunicación
+      </button>
+    </form>
+  </div>";
+  exit;
+}
+
+// Paso 3: Validar código
+if (isset($_POST['codigo'])) {
+  if ($_POST['codigo'] !== $_SESSION['codigo_verificacion']) {
+    echo "<div class='bg-white p-6 rounded-xl shadow border border-red-300 text-red-700'>❌ El código ingresado es incorrecto.</div>";
+    exit;
+  }
+  // Pasó la validación, ahora cargamos la denuncia
+  $id = $_SESSION['id_denuncia'];
+  $_GET['id'] = $id;
+}
+
 $id = isset($_GET['id']) ? $_GET['id'] : null;
 if (!$id): ?>
   <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4">
-    <h2 class="text-xl font-bold text-center text-[#942934]">🔍 Consultar estado de denuncia</h2>
+    <h2 class="text-xl font-bold text-center text-[#942934]">🔍 Consultar estado de Comunicación</h2>
     <form method="GET" class="space-y-4">
-      <input type="number" name="id" placeholder="Ingresa el ID de tu denuncia" required
+      <input type="number" name="id" placeholder="Ingresa el ID de tu Comunicación" required
         class="w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57] invalid:border-red-500" />
       <button type="submit"
         class="w-full bg-[#685f2f] hover:bg-[#a08e43] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
@@ -40,8 +127,8 @@ $resultado = $stmt->get_result();
 
 if ($resultado->num_rows === 0): ?>
   <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-red-300 text-center text-red-700 space-y-4">
-    <h2 class="text-xl font-bold">❌ Denuncia no encontrada</h2>
-    <p>No se encontró ninguna denuncia con ese ID.</p>
+    <h2 class="text-xl font-bold">❌ Comunicación no encontrada</h2>
+    <p>No se encontró ninguna Comunicación con ese ID.</p>
     <a href="ver_estado.php"
       class="inline-block bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
       Intentar de nuevo
@@ -53,7 +140,7 @@ $denuncia = $resultado->fetch_assoc(); ?>
 
   <div class="w-full max-w-5xl space-y-6">
   <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-300 space-y-4">
-    <h1 class="text-2xl font-bold text-[#685f2f]">📄 Detalles de tu denuncia #<?= htmlspecialchars($denuncia['id']) ?></h1>
+    <h1 class="text-2xl font-bold text-[#685f2f]">📄 Detalles de tu Comunicación #<?= htmlspecialchars($denuncia['id']) ?></h1>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       <p><strong>Nombre:</strong> <?= htmlspecialchars($denuncia['nombre']) ?></p>

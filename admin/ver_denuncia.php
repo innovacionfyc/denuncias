@@ -49,13 +49,13 @@ $respsDenunciante = $stmt4->get_result();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Detalle de Denuncia</title>
+    <title>Detalle de Comunicación</title>
     <link href="../assets/css/output.css" rel="stylesheet">
 </head>
 <body class="bg-[#f8f9fb] min-h-screen p-6 flex justify-center">
     <div class="w-full max-w-6xl bg-white p-8 rounded-2xl shadow-2xl border border-gray-300 space-y-6">
 
-        <h1 class="text-2xl font-bold text-[#685f2f]">📄 Denuncia #<?= htmlspecialchars($denuncia['id']) ?></h1>
+        <h1 class="text-2xl font-bold text-[#685f2f]">📄 Comunicación #<?= htmlspecialchars($denuncia['id']) ?></h1>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <p><strong>Nombre:</strong> <?= htmlspecialchars($denuncia['nombre']) ?></p>
@@ -110,12 +110,12 @@ $respsDenunciante = $stmt4->get_result();
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
-                <p class="text-gray-600">Aún no se ha respondido esta denuncia.</p>
+                <p class="text-gray-600">Aún no se ha respondido esta Comunicación.</p>
             <?php endif; ?>
         </div>
 
         <div>
-            <h2 class="text-lg font-semibold text-[#942934] mb-2">✍️ Respuestas del denunciante:</h2>
+            <h2 class="text-lg font-semibold text-[#942934] mb-2">✍️ Respuesta del emisor del reporte:</h2>
             <?php if ($respsDenunciante->num_rows > 0): ?>
                 <?php while ($r = $respsDenunciante->fetch_assoc()): ?>
                     <div class="mb-4 bg-gray-50 border border-gray-200 rounded-xl p-4 shadow max-w-lg mr-auto">
@@ -124,12 +124,12 @@ $respsDenunciante = $stmt4->get_result();
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
-                <p class="text-gray-600">El denunciante aún no ha enviado respuestas adicionales.</p>
+                <p class="text-gray-600">El emisor aún no ha enviado respuestas adicionales.</p>
             <?php endif; ?>
         </div>
 
         <div>
-            <h2 class="text-lg font-semibold text-[#685f2f] mb-2">✉️ Responder al denunciante:</h2>
+            <h2 class="text-lg font-semibold text-[#685f2f] mb-2">✉️ Responder al emisor del reporte:</h2>
             <form action="responder_correo.php" method="POST" class="space-y-4">
                 <input type="hidden" name="correo" value="<?= htmlspecialchars($denuncia['correo']) ?>">
                 <input type="hidden" name="nombre" value="<?= htmlspecialchars($denuncia['nombre']) ?>">
@@ -143,7 +143,7 @@ $respsDenunciante = $stmt4->get_result();
 
                 <?php if ($mensajeEnviado): ?>
                     <div class="bg-green-100 border border-green-300 text-green-800 p-3 rounded-xl text-center animate-pulse">
-                        ✅ Respuesta enviada exitosamente al denunciante.
+                        ✅ Respuesta enviada exitosamente al emisor del reporte.
                     </div>
                 <?php endif; ?>
             </form>
