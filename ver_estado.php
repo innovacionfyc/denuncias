@@ -305,6 +305,11 @@ $denuncia = $resultado->fetch_assoc(); ?>
     }, 4000);
   }
 </script>
-
+  <div class="mt-10 text-center">
+    <a href="cerrar_sesion_estado.php"
+       class="inline-block bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
+      🔒 Cerrar sesión y volver al inicio
+    </a>
+  </div>
 </body>
 </html>
