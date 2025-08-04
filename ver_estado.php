@@ -3,6 +3,12 @@ require_once "db/conexion.php";
 require_once "correo/enviar_correo.php";
 session_start();
 
+if (isset($_POST['reiniciar'])) {
+  session_unset(); // Limpia TODAS las variables de sesión
+  session_destroy(); // Cierra completamente la sesión
+  session_start(); // Inicia nueva
+}
+
 function generarCodigoVerificacion($longitud = 6) {
   return str_pad(random_int(0, 999999), $longitud, '0', STR_PAD_LEFT);
 }
