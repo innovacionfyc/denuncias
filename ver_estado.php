@@ -101,6 +101,7 @@ if (isset($_SESSION['esperando_codigo']) && !isset($_POST['codigo'])) {
 // Paso 4: Validar código
 if (isset($_POST['codigo'])) {
   if ($_POST['codigo'] !== $_SESSION['codigo_verificacion']) {
+    // Código incorrecto, mostramos de nuevo el formulario con mensaje de error
     echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-red-300 space-y-4'>
       <h2 class='text-xl font-bold text-center text-[#942934]'>❌ Código incorrecto</h2>
       <p class='text-sm text-center text-red-600'>El código que ingresaste no es válido. Por favor, verifica e intenta nuevamente.</p>
@@ -109,16 +110,23 @@ if (isset($_POST['codigo'])) {
           class='w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57]' />
         <button type='submit'
           class='w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]'>
-          Reintentar
+          Ver denuncia
         </button>
       </form>
     </div>";
     exit;
+  } else {
+    // ✅ Código correcto
+    $_SESSION['verificado'] = true;
+    $id = $_SESSION['id_denuncia'];
+    $_GET['id'] = $id;
   }
+}
 
-  $id = $_SESSION['id_denuncia'];
-  $_GET['id'] = $id;
-  unset($_SESSION['esperando_codigo']);
+if (!isset($_SESSION['verificado']) || $_SESSION['verificado'] !== true) {
+  // No pasó por el paso de verificación
+  header("Location: ver_estado.php");
+  exit;
 }
 
 $id = isset($_GET['id']) ? $_GET['id'] : null;
@@ -135,6 +143,16 @@ if (!$id): ?>
     </form>
   </div>
 <?php exit; endif; 
+
+if (!isset($_SESSION['verificado']) || $_SESSION['verificado'] !== true) {
+  echo "<div class='bg-white p-6 rounded-xl shadow border border-red-300 text-red-700 text-center space-y-4 max-w-md w-full'>
+          <p class='text-lg'>🚫 No has verificado tu identidad.</p>
+          <a href='ver_estado.php' class='inline-block bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300'>
+            Volver al inicio
+          </a>
+        </div>";
+  exit;
+}
 
 $sql = "SELECT * FROM denuncias WHERE id = ?";
 $stmt = $conn->prepare($sql);
