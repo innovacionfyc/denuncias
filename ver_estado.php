@@ -120,6 +120,10 @@ if (isset($_POST['codigo'])) {
     $_SESSION['verificado'] = true;
     $id = $_SESSION['id_denuncia'];
     $_GET['id'] = $id;
+    // ✅ Limpiar sesión para evitar problemas si vuelve al inicio
+    unset($_SESSION['codigo_verificacion']);
+    unset($_SESSION['id_denuncia']);
+    unset($_SESSION['correo_denunciante']);
   }
 }
 
