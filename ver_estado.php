@@ -218,49 +218,59 @@ $denuncia = $resultado->fetch_assoc(); ?>
     </div>
   </div>
 
-  <!-- Respuestas del comité -->
-  <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
-    <h2 class="text-lg font-bold mb-4 text-[#a08e43]">📬 Respuestas del comité</h2>
-    <?php
-    $sqlRespuestasEquipo = "SELECT * FROM respuestas WHERE id_denuncia = ? ORDER BY fecha_respuesta ASC";
-    $stmtEquipo = $conn->prepare($sqlRespuestasEquipo);
-    $stmtEquipo->bind_param("i", $denuncia['id']);
-    $stmtEquipo->execute();
-    $respsEquipo = $stmtEquipo->get_result();
+  <!-- Conversación intercalada -->
+  <div class="bg-white p-6 rounded-2xl shadow border border-gray-300 space-y-4">
+    <h2 class="text-lg font-bold mb-4 text-[#a08e43]">💬 Conversación</h2>
 
-    if ($respsEquipo->num_rows > 0):
-      while ($r = $respsEquipo->fetch_assoc()): ?>
-        <div class="mb-4 bg-green-50 border border-gray-300 rounded p-4 w-fit max-w-lg ml-0">
+    <?php
+    // Traer respuestas del comité
+    $respuestas = [];
+
+    $sqlComite = "SELECT 'comite' AS origen, mensaje, fecha_respuesta AS fecha FROM respuestas WHERE id_denuncia = ?";
+    $stmt1 = $conn->prepare($sqlComite);
+    $stmt1->bind_param("i", $denuncia['id']);
+    $stmt1->execute();
+    $res1 = $stmt1->get_result();
+
+    while ($r = $res1->fetch_assoc()) {
+      $respuestas[] = $r;
+    }
+
+    // Traer respuestas del denunciante
+    $sqlDenunciante = "SELECT 'denunciante' AS origen, mensaje, fecha FROM respuestas_denunciante WHERE id_denuncia = ?";
+    $stmt2 = $conn->prepare($sqlDenunciante);
+    $stmt2->bind_param("i", $denuncia['id']);
+    $stmt2->execute();
+    $res2 = $stmt2->get_result();
+
+    while ($r = $res2->fetch_assoc()) {
+      $respuestas[] = $r;
+    }
+
+    // Ordenar por fecha
+    usort($respuestas, function ($a, $b) {
+      return strtotime($a['fecha']) <=> strtotime($b['fecha']);
+    });
+
+    // Mostrar intercaladas
+    if (count($respuestas) > 0):
+      foreach ($respuestas as $r):
+        $esComite = $r['origen'] === 'comite';
+        $color = $esComite ? 'bg-green-50 ml-0' : 'bg-gray-50 ml-auto';
+        $fecha = date('Y-m-d H:i', strtotime($r['fecha']));
+    ?>
+        <div class="border border-gray-300 rounded p-4 w-fit max-w-lg <?= $color ?>">
           <?= nl2br(htmlspecialchars($r['mensaje'])) ?>
-          <p class="text-sm text-gray-500 mt-2">📅 <?= $r['fecha_respuesta'] ?></p>
+          <p class="text-sm text-gray-500 mt-2">📅 <?= $fecha ?></p>
         </div>
-    <?php endwhile; else:
-      echo "<p class='text-gray-600'>Aún no has recibido respuestas del comité.</p>";
+    <?php
+      endforeach;
+    else:
+      echo "<p class='text-gray-600'>Aún no hay conversación registrada.</p>";
     endif;
     ?>
   </div>
 
-  <!-- Respuestas del denunciante -->
-  <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
-    <h2 class="text-lg font-bold mb-4 text-[#942934]">✍️ Tus respuestas</h2>
-    <?php
-    $sqlRespuestas = "SELECT * FROM respuestas_denunciante WHERE id_denuncia = ? ORDER BY fecha ASC";
-    $stmtResp = $conn->prepare($sqlRespuestas);
-    $stmtResp->bind_param("i", $denuncia['id']);
-    $stmtResp->execute();
-    $resps = $stmtResp->get_result();
-
-    if ($resps->num_rows > 0):
-      while ($r = $resps->fetch_assoc()): ?>
-        <div class="mb-4 bg-gray-50 border border-gray-300 rounded p-4 w-fit max-w-lg ml-auto">
-          <?= nl2br(htmlspecialchars($r['mensaje'])) ?>
-          <p class="text-sm text-gray-500 mt-2">📅 <?= $r['fecha'] ?></p>
-        </div>
-    <?php endwhile; else:
-      echo "<p class='text-gray-600'>Aún no has enviado respuestas adicionales.</p>";
-    endif;
-    ?>
-  </div>
 
   <!-- Enviar nueva respuesta -->
   <?php if ($denuncia['estado'] === 'en_proceso'): ?>
