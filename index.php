@@ -105,20 +105,22 @@
 
       <!-- Botones -->
       <div class="flex flex-col sm:flex-row gap-4 pt-4">
+        <!-- Botón de enviar comunicación (dentro del form) -->
         <button type="submit"
           class="w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
           📝 Enviar Comunicación
         </button>
-
-        <form method="POST" action="ver_estado.php" class="w-full">
-          <input type="hidden" name="reiniciar" value="1">
-          <button type="submit"
-            class="w-full bg-[#a08e43] hover:bg-[#685f2f] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
-            🔎 Consultar estado
-          </button>
-        </form>
       </div>
+      </form> <!-- ⛔️ Cerramos el form aquí -->
 
+      <!-- Botón de consultar estado (fuera del form) -->
+      <form method="POST" action="ver_estado.php" class="w-full mt-4">
+        <input type="hidden" name="reiniciar" value="1">
+        <button type="submit"
+          class="w-full bg-[#a08e43] hover:bg-[#685f2f] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
+          🔎 Consultar estado
+        </button>
+      </form>
 
       <p class="text-xs text-center text-gray-500 pt-2">
         La información enviada es confidencial y será tratada de manera segura según nuestra política de protección de datos.
