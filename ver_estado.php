@@ -218,57 +218,19 @@ $denuncia = $resultado->fetch_assoc(); ?>
     </div>
   </div>
 
-  <!-- Conversación intercalada -->
+  <!-- Conversación intercalada con recarga -->
   <div class="bg-white p-6 rounded-2xl shadow border border-gray-300 space-y-4">
-    <h2 class="text-lg font-bold mb-4 text-[#a08e43]">💬 Conversación</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-[#a08e43]">💬 Conversación</h2>
+      <button onclick="recargarMensajes()"
+        class="bg-[#685f2f] hover:bg-[#a08e43] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
+        🔄 Revisar nuevos mensajes
+      </button>
+    </div>
 
-    <?php
-    // Traer respuestas del comité
-    $respuestas = [];
-
-    $sqlComite = "SELECT 'comite' AS origen, mensaje, fecha_respuesta AS fecha FROM respuestas WHERE id_denuncia = ?";
-    $stmt1 = $conn->prepare($sqlComite);
-    $stmt1->bind_param("i", $denuncia['id']);
-    $stmt1->execute();
-    $res1 = $stmt1->get_result();
-
-    while ($r = $res1->fetch_assoc()) {
-      $respuestas[] = $r;
-    }
-
-    // Traer respuestas del denunciante
-    $sqlDenunciante = "SELECT 'denunciante' AS origen, mensaje, fecha FROM respuestas_denunciante WHERE id_denuncia = ?";
-    $stmt2 = $conn->prepare($sqlDenunciante);
-    $stmt2->bind_param("i", $denuncia['id']);
-    $stmt2->execute();
-    $res2 = $stmt2->get_result();
-
-    while ($r = $res2->fetch_assoc()) {
-      $respuestas[] = $r;
-    }
-
-    // Ordenar por fecha
-    usort($respuestas, function ($a, $b) {
-      return strtotime($a['fecha']) <=> strtotime($b['fecha']);
-    });
-
-    // Mostrar intercaladas
-    if (count($respuestas) > 0):
-      foreach ($respuestas as $r):
-        $esComite = $r['origen'] === 'comite';
-        $color = $esComite ? 'bg-green-50 ml-0' : 'bg-gray-50 ml-auto';
-        $fecha = date('Y-m-d H:i', strtotime($r['fecha']));
-    ?>
-        <div class="border border-gray-300 rounded p-4 w-fit max-w-lg <?= $color ?>">
-          <?= nl2br(htmlspecialchars($r['mensaje'])) ?>
-          <p class="text-sm text-gray-500 mt-2">📅 <?= $fecha ?></p>
-        </div>
-    <?php
-      endforeach;
-    else:
-      echo "<p class='text-gray-600'>Aún no hay conversación registrada.</p>";
-    endif;
-    ?>
+    <div id="contenedor-conversacion">
+      <p class="text-gray-500 text-sm">⏳ Cargando conversación...</p>
+    </div>
   </div>
 
 
@@ -314,6 +276,27 @@ $denuncia = $resultado->fetch_assoc(); ?>
       setTimeout(() => toast.remove(), 500);
     }, 4000);
   }
+  function recargarMensajes() {
+    const contenedor = document.getElementById("contenedor-conversacion");
+    contenedor.innerHTML = "<p class='text-gray-500 text-sm'>🔄 Cargando nuevos mensajes...</p>";
+
+    const id = <?= json_encode($_GET['id']) ?>;
+
+    fetch(`cargar_conversacion.php?id=${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Error al cargar");
+        return res.text();
+      })
+      .then(html => {
+        contenedor.innerHTML = html;
+      })
+      .catch(() => {
+        contenedor.innerHTML = "<p class='text-red-500 text-sm'>❌ Error al actualizar mensajes.</p>";
+      });
+  }
+
+  // Cargar automáticamente al entrar
+  document.addEventListener("DOMContentLoaded", recargarMensajes);
 </script>
   <div class="mt-10 text-center">
     <a href="cerrar_sesion_estado.php"
