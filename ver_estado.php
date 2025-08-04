@@ -25,8 +25,8 @@ function generarCodigoVerificacion($longitud = 6) {
 <?php endif; ?>
 
 <?php
-// Paso 1: Formulario inicial de ID y correo
-if (!isset($_POST['verificar']) && !isset($_POST['codigo']) && !isset($_SESSION['esperando_codigo'])): ?>
+// Paso 1: Formulario inicial
+if (!isset($_POST['verificar']) && !isset($_POST['codigo']) && !isset($_SESSION['esperando_codigo']) && !isset($_SESSION['verificado'])): ?>
   <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4">
     <h2 class="text-xl font-bold text-center text-[#942934]">🔐 Consultar estado de denuncia</h2>
     <form method="POST" class="space-y-4">
@@ -43,7 +43,7 @@ if (!isset($_POST['verificar']) && !isset($_POST['codigo']) && !isset($_SESSION[
 <?php exit; endif; ?>
 
 <?php
-// Paso 2: Generar y enviar código
+// Paso 2: Enviar código
 if (isset($_POST['verificar'])) {
   $id = $_POST['id'];
   $correo = $_POST['correo'];
@@ -68,21 +68,18 @@ if (isset($_POST['verificar'])) {
   $_SESSION['esperando_codigo'] = true;
 
   $denuncia = $res->fetch_assoc();
-  $nombreReal = $denuncia['nombre'];
   $correoDenuncia = new CorreoDenuncia();
   $asunto = "Código de verificación - Consulta de denuncia #$id";
-
   $mensaje = "
     <p>Hola,</p>
     <p>Tu código para consultar el estado de tu denuncia es:</p>
     <h2 style='font-size:28px;'>$codigo</h2>
     <p>Este código es válido por unos minutos.</p>
   ";
-
-  $correoDenuncia->sendConfirmacion($nombreReal, $correo, $id, $asunto, $mensaje);
+  $correoDenuncia->sendConfirmacion($denuncia['nombre'], $correo, $id, $asunto, $mensaje);
 }
 
-// Paso 3: Mostrar formulario para ingresar código si ya está esperando
+// Paso 3: Formulario de código
 if (isset($_SESSION['esperando_codigo']) && !isset($_POST['codigo'])) {
   echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4'>
     <h2 class='text-xl font-bold text-center text-[#942934]'>📩 Verificación de código</h2>
@@ -101,7 +98,6 @@ if (isset($_SESSION['esperando_codigo']) && !isset($_POST['codigo'])) {
 // Paso 4: Validar código
 if (isset($_POST['codigo'])) {
   if ($_POST['codigo'] !== $_SESSION['codigo_verificacion']) {
-    // Código incorrecto, mostramos de nuevo el formulario con mensaje de error
     echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-red-300 space-y-4'>
       <h2 class='text-xl font-bold text-center text-[#942934]'>❌ Código incorrecto</h2>
       <p class='text-sm text-center text-red-600'>El código que ingresaste no es válido. Por favor, verifica e intenta nuevamente.</p>
@@ -115,51 +111,32 @@ if (isset($_POST['codigo'])) {
       </form>
     </div>";
     exit;
-  } else {
-    // ✅ Código correcto
-    $_SESSION['verificado'] = true;
-    $id = $_SESSION['id_denuncia'];
-    $_GET['id'] = $id;
-    // ✅ Limpiar sesión para evitar problemas si vuelve al inicio
-    unset($_SESSION['codigo_verificacion']);
-    unset($_SESSION['id_denuncia']);
-    unset($_SESSION['correo_denunciante']);
   }
+
+  // Código correcto
+  $_SESSION['verificado'] = true;
+  $id = $_SESSION['id_denuncia'];
+  $_GET['id'] = $id;
+
+  // Limpiar sesión
+  unset($_SESSION['codigo_verificacion']);
+  unset($_SESSION['id_denuncia']);
+  unset($_SESSION['correo_denunciante']);
+  unset($_SESSION['esperando_codigo']);
 }
 
+// Paso 5: Verificación obligatoria
 if (!isset($_SESSION['verificado']) || $_SESSION['verificado'] !== true) {
-  // No pasó por el paso de verificación
   header("Location: ver_estado.php");
   exit;
 }
 
-$id = isset($_GET['id']) ? $_GET['id'] : null;
-if (!$id): ?>
-  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4">
-    <h2 class="text-xl font-bold text-center text-[#942934]">🔍 Consultar estado de Comunicación</h2>
-    <form method="GET" class="space-y-4">
-      <input type="number" name="id" placeholder="Ingresa el ID de tu Comunicación" required
-        class="w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57] invalid:border-red-500" />
-      <button type="submit"
-        class="w-full bg-[#685f2f] hover:bg-[#a08e43] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
-        Consultar
-      </button>
-    </form>
-  </div>
-<?php exit; endif; 
+// Paso 6: Mostrar denuncia
+// El resto de tu código para mostrar los datos, respuestas y archivos ya está bien y se mantiene intacto.
+// ⬇️ En el próximo mensaje te pego desde aquí para no cortarlo.
+$id = $_GET['id'];
 
-if (!isset($_SESSION['verificado']) || $_SESSION['verificado'] !== true) {
-  echo "<div class='bg-white p-6 rounded-xl shadow border border-red-300 text-red-700 text-center space-y-4 max-w-md w-full'>
-          <p class='text-lg'>🚫 No has verificado tu identidad.</p>
-          <a href='ver_estado.php' class='inline-block bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300'>
-            Volver al inicio
-          </a>
-        </div>";
-  exit;
-}
-
-$sql = "SELECT * FROM denuncias WHERE id = ?";
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare("SELECT * FROM denuncias WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $resultado = $stmt->get_result();
@@ -177,21 +154,20 @@ if ($resultado->num_rows === 0): ?>
 
 $denuncia = $resultado->fetch_assoc(); ?>
 
-  <div class="w-full max-w-5xl space-y-6">
+<div class="w-full max-w-5xl space-y-6">
+
+  <!-- Detalles -->
   <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-300 space-y-4">
     <h1 class="text-2xl font-bold text-[#685f2f]">📄 Detalles de tu Comunicación #<?= htmlspecialchars($denuncia['id']) ?></h1>
-
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       <p><strong>Nombre:</strong> <?= htmlspecialchars($denuncia['nombre']) ?></p>
       <p><strong>Correo:</strong> <?= htmlspecialchars($denuncia['correo']) ?></p>
       <p><strong>Estado:</strong> <?= ucfirst($denuncia['estado']) ?></p>
     </div>
-
     <div>
       <h2 class="text-lg font-semibold text-[#942934] mb-2">📝 Mensaje:</h2>
       <div class="border border-gray-200 p-4 bg-gray-50 rounded-xl whitespace-pre-line shadow"><?= htmlspecialchars($denuncia['mensaje']) ?></div>
     </div>
-
     <?php if (!empty($denuncia['firma'])): ?>
       <div>
         <p class="mt-4 font-semibold">Firma del colaborador:</p>
@@ -200,7 +176,7 @@ $denuncia = $resultado->fetch_assoc(); ?>
     <?php endif; ?>
   </div>
 
-
+  <!-- Archivos -->
   <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-300">
     <h2 class="text-xl font-bold mb-4 text-[#942934]">📎 Archivos adjuntos</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -236,6 +212,7 @@ $denuncia = $resultado->fetch_assoc(); ?>
     </div>
   </div>
 
+  <!-- Respuestas del comité -->
   <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
     <h2 class="text-lg font-bold mb-4 text-[#a08e43]">📬 Respuestas del comité</h2>
     <?php
@@ -257,6 +234,7 @@ $denuncia = $resultado->fetch_assoc(); ?>
     ?>
   </div>
 
+  <!-- Respuestas del denunciante -->
   <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
     <h2 class="text-lg font-bold mb-4 text-[#942934]">✍️ Tus respuestas</h2>
     <?php
@@ -278,6 +256,7 @@ $denuncia = $resultado->fetch_assoc(); ?>
     ?>
   </div>
 
+  <!-- Enviar nueva respuesta -->
   <?php if ($denuncia['estado'] === 'en_proceso'): ?>
     <div class="bg-white p-6 rounded-2xl shadow border border-gray-300">
       <h2 class="text-lg font-bold mb-4 text-[#685f2f]">📨 Enviar una nueva respuesta</h2>
@@ -299,28 +278,27 @@ $denuncia = $resultado->fetch_assoc(); ?>
 <div id="modalImagen" class="fixed inset-0 bg-black/80 hidden justify-center items-center z-50">
   <img id="imagenGrande" class="max-w-4xl max-h-[90vh] rounded-xl shadow-xl border-4 border-white" />
 </div>
-  <script>
-    function ampliarImagen(src) {
-      const modal = document.getElementById('modalImagen');
-      const img = document.getElementById('imagenGrande');
-      img.src = src;
-      modal.classList.remove('hidden');
-    }
-    document.getElementById('modalImagen').addEventListener('click', () => {
-      document.getElementById('modalImagen').classList.add('hidden');
-    });
 
-    // ⏳ Ocultar el toast luego de 4 segundos
-    const toast = document.getElementById('toast');
-    if (toast) {
-      setTimeout(() => {
-        toast.classList.remove('animate-toast-in');
-        toast.classList.add('animate-toast-out');
-        setTimeout(() => toast.remove(), 500); // se elimina después de desaparecer
-      }, 4000);
-    }
-  </script>
+<script>
+  function ampliarImagen(src) {
+    const modal = document.getElementById('modalImagen');
+    const img = document.getElementById('imagenGrande');
+    img.src = src;
+    modal.classList.remove('hidden');
+  }
+  document.getElementById('modalImagen').addEventListener('click', () => {
+    document.getElementById('modalImagen').classList.add('hidden');
+  });
 
+  const toast = document.getElementById('toast');
+  if (toast) {
+    setTimeout(() => {
+      toast.classList.remove('animate-toast-in');
+      toast.classList.add('animate-toast-out');
+      setTimeout(() => toast.remove(), 500);
+    }, 4000);
+  }
+</script>
 
 </body>
 </html>
