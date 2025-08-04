@@ -297,6 +297,8 @@ $denuncia = $resultado->fetch_assoc(); ?>
 
   // Cargar automáticamente al entrar
   document.addEventListener("DOMContentLoaded", recargarMensajes);
+  // Recargar automáticamente cada 20 segundos
+  setInterval(recargarMensajes, 20000);
 </script>
   <div class="mt-10 text-center">
     <a href="cerrar_sesion_estado.php"
