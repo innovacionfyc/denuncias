@@ -26,11 +26,11 @@ function generarCodigoVerificacion($longitud = 6) {
 
 <?php
 // Paso 1: Formulario inicial de ID y correo
-if (!isset($_POST['verificar']) && !isset($_POST['codigo'])): ?>
+if (!isset($_POST['verificar']) && !isset($_POST['codigo']) && !isset($_SESSION['esperando_codigo'])): ?>
   <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4">
     <h2 class="text-xl font-bold text-center text-[#942934]">🔐 Consultar estado de denuncia</h2>
     <form method="POST" class="space-y-4">
-      <input type="number" name="id" placeholder="ID de la denuncia" required
+      <input type="number" name="id" placeholder="ID del presunto caso" required
         class="w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57] invalid:border-red-500" />
       <input type="email" name="correo" placeholder="Correo electrónico registrado" required
         class="w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57] invalid:border-red-500" />
@@ -65,6 +65,7 @@ if (isset($_POST['verificar'])) {
   $_SESSION['codigo_verificacion'] = $codigo;
   $_SESSION['id_denuncia'] = $id;
   $_SESSION['correo_denunciante'] = $correo;
+  $_SESSION['esperando_codigo'] = true;
 
   $denuncia = $res->fetch_assoc();
   $nombreReal = $denuncia['nombre'];
@@ -79,8 +80,10 @@ if (isset($_POST['verificar'])) {
   ";
 
   $correoDenuncia->sendConfirmacion($nombreReal, $correo, $id, $asunto, $mensaje);
+}
 
-  // Formulario de ingreso de código
+// Paso 3: Mostrar formulario para ingresar código si ya está esperando
+if (isset($_SESSION['esperando_codigo']) && !isset($_POST['codigo'])) {
   echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4'>
     <h2 class='text-xl font-bold text-center text-[#942934]'>📩 Verificación de código</h2>
     <form method='POST' class='space-y-4'>
@@ -95,18 +98,27 @@ if (isset($_POST['verificar'])) {
   exit;
 }
 
-// Paso 3: Validar código
+// Paso 4: Validar código
 if (isset($_POST['codigo'])) {
-  if (!isset($_SESSION['codigo_verificacion']) || $_POST['codigo'] !== $_SESSION['codigo_verificacion']) {
-    echo "<div class='bg-white p-6 rounded-xl shadow border border-red-300 text-red-700 space-y-4 max-w-md w-full text-center'>
-            <p class='text-lg'>❌ El código ingresado es incorrecto.</p>
-            <a href='ver_estado.php' class='inline-block mt-4 bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300'>Intentar nuevamente</a>
-          </div>";
+  if ($_POST['codigo'] !== $_SESSION['codigo_verificacion']) {
+    echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-red-300 space-y-4'>
+      <h2 class='text-xl font-bold text-center text-[#942934]'>❌ Código incorrecto</h2>
+      <p class='text-sm text-center text-red-600'>El código que ingresaste no es válido. Por favor, verifica e intenta nuevamente.</p>
+      <form method='POST' class='space-y-4'>
+        <input type='text' name='codigo' maxlength='6' placeholder='Código recibido en tu correo' required
+          class='w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57]' />
+        <button type='submit'
+          class='w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]'>
+          Reintentar
+        </button>
+      </form>
+    </div>";
     exit;
   }
-  // Pasó la validación, ahora cargamos la denuncia
+
   $id = $_SESSION['id_denuncia'];
   $_GET['id'] = $id;
+  unset($_SESSION['esperando_codigo']);
 }
 
 $id = isset($_GET['id']) ? $_GET['id'] : null;
@@ -122,7 +134,7 @@ if (!$id): ?>
       </button>
     </form>
   </div>
-<?php exit; endif;
+<?php exit; endif; 
 
 $sql = "SELECT * FROM denuncias WHERE id = ?";
 $stmt = $conn->prepare($sql);
