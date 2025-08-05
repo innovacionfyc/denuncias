@@ -173,7 +173,7 @@ $archivos = $stmt2->get_result();
   });
 </script>
 
-<audio id="sonido-pop" src="../assets/sounds/pop.mp3" preload="auto"></audio>
+<audio id="sonido-pop" src="../assets/sounds/bubblepop-254773.mp3" preload="auto"></audio>
 
 </div> <!-- cierre del div grande -->
 </body>
