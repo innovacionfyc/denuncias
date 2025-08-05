@@ -40,12 +40,35 @@ class CorreoDenuncia {
                 $mail->AltBody = strip_tags($mensajePersonalizado);
             } else {
                 $mensaje = "
-                    <h2>Hola, $nombre</h2>
-                    <p>Hemos recibido tu denuncia con el ID <strong>$id_denuncia</strong>.</p>
-                    <p>La estamos evaluando y te notificaremos cuando cambie el estado.</p>
-                    <p>Gracias por tu confianza.</p>
+                  <div style='font-family: Arial, sans-serif; background-color: #f8f9fb; padding: 20px;'>
+                    <div style='max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden;'>
+
+                      <div style='background-color: #942934; color: white; padding: 20px; text-align: center;'>
+                        <h2 style='margin: 0;'>Confirmación de Comunicación</h2>
+                      </div>
+
+                      <div style='padding: 30px; color: #333333;'>
+                        <p>Hola <strong>$nombre</strong>,</p>
+
+                        <p>Hemos recibido tu mensaje con el número de radicado <strong style='color: #d32f57;'>#$id_denuncia</strong>.</p>
+
+                        <p>Desde nuestro equipo estaremos revisando cuidadosamente tu comunicación y te notificaremos cuando tengamos novedades.</p>
+
+                        <p>Gracias por tu confianza en <strong>F&C Consultores</strong>.</p>
+
+                        <hr style='margin: 30px 0; border: none; border-top: 1px solid #e0e0e0;'>
+
+                        <p style='font-size: 12px; color: #888888;'>Este es un mensaje automático. Por favor, no respondas a este correo.</p>
+                      </div>
+
+                      <div style='background-color: #f1f1f1; text-align: center; padding: 10px; font-size: 12px; color: #888888;'>
+                        F&C Consultores © " . date('Y') . "
+                      </div>
+
+                    </div>
+                  </div>
                 ";
-                $mail->AltBody = "Hemos recibido tu denuncia #$id_denuncia. Te avisaremos cuando cambie el estado.";
+                $mail->AltBody = "Hemos recibido tu mensaje #$id_denuncia. Te avisaremos cuando cambie el estado.";
             }
 
             $mail->MsgHTML($mensaje);
