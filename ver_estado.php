@@ -257,49 +257,60 @@ $denuncia = $resultado->fetch_assoc(); ?>
   <img id="imagenGrande" class="max-w-4xl max-h-[90vh] rounded-xl shadow-xl border-4 border-white" />
 </div>
 
-<script>
-  function ampliarImagen(src) {
-    const modal = document.getElementById('modalImagen');
-    const img = document.getElementById('imagenGrande');
-    img.src = src;
-    modal.classList.remove('hidden');
-  }
-  document.getElementById('modalImagen').addEventListener('click', () => {
-    document.getElementById('modalImagen').classList.add('hidden');
-  });
+  <script>
+    let ultimaConversacion = ""; // contenido anterior
 
-  const toast = document.getElementById('toast');
-  if (toast) {
-    setTimeout(() => {
-      toast.classList.remove('animate-toast-in');
-      toast.classList.add('animate-toast-out');
-      setTimeout(() => toast.remove(), 500);
-    }, 4000);
-  }
-  function recargarMensajes() {
-    const contenedor = document.getElementById("contenedor-conversacion");
-    contenedor.innerHTML = "<p class='text-gray-500 text-sm'>🔄 Cargando nuevos mensajes...</p>";
+    function ampliarImagen(src) {
+      const modal = document.getElementById('modalImagen');
+      const img = document.getElementById('imagenGrande');
+      img.src = src;
+      modal.classList.remove('hidden');
+    }
 
-    const id = <?= json_encode($_GET['id']) ?>;
+    document.getElementById('modalImagen').addEventListener('click', () => {
+      document.getElementById('modalImagen').classList.add('hidden');
+    });
 
-    fetch(`cargar_conversacion.php?id=${id}`)
-      .then(res => {
-        if (!res.ok) throw new Error("Error al cargar");
-        return res.text();
-      })
-      .then(html => {
-        contenedor.innerHTML = html;
-      })
-      .catch(() => {
-        contenedor.innerHTML = "<p class='text-red-500 text-sm'>❌ Error al actualizar mensajes.</p>";
-      });
-  }
+    const toast = document.getElementById('toast');
+    if (toast) {
+      setTimeout(() => {
+        toast.classList.remove('animate-toast-in');
+        toast.classList.add('animate-toast-out');
+        setTimeout(() => toast.remove(), 500);
+      }, 4000);
+    }
 
-  // Cargar automáticamente al entrar
-  document.addEventListener("DOMContentLoaded", recargarMensajes);
-  // Recargar automáticamente cada 20 segundos
-  setInterval(recargarMensajes, 20000);
-</script>
+    function recargarMensajes() {
+      const contenedor = document.getElementById("contenedor-conversacion");
+      const sonido = document.getElementById("sonido-pop");
+      const id = <?= json_encode($_GET['id']) ?>;
+
+      fetch(`cargar_conversacion.php?id=${id}`)
+        .then(res => {
+          if (!res.ok) throw new Error("Error al cargar");
+          return res.text();
+        })
+        .then(html => {
+          if (html.trim() !== ultimaConversacion.trim()) {
+            contenedor.innerHTML = html;
+            sonido.play().catch(() => {}); // reproducir el sonido si hay cambios
+            ultimaConversacion = html;
+          }
+        })
+        .catch(() => {
+          contenedor.innerHTML = "<p class='text-red-500 text-sm'>❌ Error al actualizar mensajes.</p>";
+        });
+    }
+
+    // Cargar al entrar + cada 20 segundos
+    document.addEventListener("DOMContentLoaded", () => {
+      recargarMensajes();
+      setInterval(recargarMensajes, 20000);
+    });
+  </script>
+
+  <!-- Sonido pop -->
+  <audio id="sonido-pop" src="assets/sounds/pop.mp3" preload="auto"></audio>
   <div class="mt-10 text-center">
     <a href="cerrar_sesion_estado.php"
        class="inline-block bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
