@@ -310,7 +310,7 @@ $denuncia = $resultado->fetch_assoc(); ?>
   </script>
 
   <!-- Sonido pop -->
-  <audio id="sonido-pop" src="assets/sounds/pop.mp3" preload="auto"></audio>
+  <audio id="sonido-pop" src="assets/sounds/bubblepop-254773.mp3" preload="auto"></audio>
   <div class="mt-10 text-center">
     <a href="cerrar_sesion_estado.php"
        class="inline-block bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
