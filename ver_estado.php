@@ -106,8 +106,9 @@ if (isset($_POST['verificar'])) {
   exit;
 }
 
-// Paso 3: Mostrar formulario para ingresar código (solo si estamos en paso=codigo)
+// Paso 3: Mostrar formulario para ingresar código (solo si estamos en paso=codigo y es GET)
 if (
+  $_SERVER['REQUEST_METHOD'] === 'GET' &&
   isset($_GET['paso']) && $_GET['paso'] === 'codigo' &&
   isset($_SESSION['esperando_codigo'])
 ) {
@@ -143,29 +144,35 @@ if (
   <?php
   exit;
 }
+
 ?>
 
 <?php
 // Paso 4: Validar código (PRG)
 if (isset($_POST['codigo'])) {
-  $idActual = isset($_SESSION['id_denuncia']) ? $_SESSION['id_denuncia'] : null;
+  // Fallback: si por alguna razón se “perdió” la variable de sesión, intenta usar el id de la URL
+  $idActual = isset($_SESSION['id_denuncia']) ? (int)$_SESSION['id_denuncia'] : (isset($_GET['id']) ? (int)$_GET['id'] : null);
+
+  // (logs temporales para depurar; luego puedes quitarlos)
+  if (!isset($_SESSION['id_denuncia'])) {
+    error_log('ver_estado.php: WARNING no session id_denuncia en POST; usando GET id=' . ($idActual !== null ? $idActual : 'NULL'));
+  }
+  error_log('ver_estado.php: POST codigo, SID=' . session_id() . ', idActual=' . ($idActual !== null ? $idActual : 'NULL'));
+
   $codigoOk = (isset($_SESSION['codigo_verificacion']) && $_POST['codigo'] === $_SESSION['codigo_verificacion']);
 
   if (!$codigoOk || !$idActual) {
-    // Código inválido -> redirigimos a GET (PRG) con error
     header('Location: ver_estado.php?paso=codigo&id=' . urlencode($idActual ? $idActual : 0) . '&error=1');
     exit;
   }
 
-  // Código correcto -> marcar verificado con ventana de gracia
+  // ✅ Código correcto
   $_SESSION['verificado']       = true;
   $_SESSION['verificado_id']    = $idActual;
   $_SESSION['verificado_until'] = time() + ($GRACE_MINUTES * 60);
 
-  // Limpia datos de verificación ya usados
   unset($_SESSION['codigo_verificacion'], $_SESSION['esperando_codigo']);
 
-  // PRG a la vista por GET
   header('Location: ver_estado.php?id=' . urlencode($idActual));
   exit;
 }
