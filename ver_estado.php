@@ -206,7 +206,7 @@ $denuncia = $resultado->fetch_assoc(); ?>
         <div class="bg-white border border-gray-200 rounded-xl shadow-md p-4 flex flex-col items-center justify-center">
           <p class="text-sm font-medium text-[#942934] mb-2">🎧 Evidencia de audio</p>
           <audio controls class="w-full">
-            <source src="<?= $ruta ?>" type="audio/mpeg">
+            <source src="<?= htmlspecialchars($archivo['ruta_archivo']) ?>">
             Tu navegador no soporta la reproducción de audio.
           </audio>
         </div>
