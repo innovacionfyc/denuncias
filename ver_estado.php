@@ -3,6 +3,25 @@ require_once "db/conexion.php";
 require_once "correo/enviar_correo.php";
 session_start();
 
+// Evitar reenvío/ cache de formularios
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+
+// Ventana de gracia en minutos
+$GRACE_MINUTES = 20;
+
+// Helpers (compatibles con PHP viejo)
+function verificacion_vigente($id) {
+  return isset($_SESSION['verificado'], $_SESSION['verificado_id'], $_SESSION['verificado_until'])
+    && $_SESSION['verificado'] === true
+    && $_SESSION['verificado_id'] == $id
+    && $_SESSION['verificado_until'] > time();
+}
+function renovar_gracia($minutos) {
+  $_SESSION['verificado_until'] = time() + ($minutos * 60);
+}
+
+
 if (isset($_POST['reiniciar'])) {
   session_unset(); // Limpia TODAS las variables de sesión
   session_destroy(); // Cierra completamente la sesión
@@ -85,61 +104,90 @@ if (isset($_POST['verificar'])) {
   $correoDenuncia->sendConfirmacion($denuncia['nombre'], $correo, $id, $asunto, $mensaje);
 }
 
-// Paso 3: Formulario de código
-if (isset($_SESSION['esperando_codigo']) && !isset($_POST['codigo'])) {
-  echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 space-y-4'>
-    <h2 class='text-xl font-bold text-center text-[#942934]'>📩 Verificación de código</h2>
-    <form method='POST' class='space-y-4'>
-      <input type='text' name='codigo' maxlength='6' placeholder='Código recibido en tu correo' required
-        class='w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57]' />
-      <button type='submit'
-        class='w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]'>
-        Ver denuncia
+<?php
+// Paso 3: Mostrar formulario para ingresar código (solo si estamos en paso=codigo)
+if (
+  isset($_GET['paso']) && $_GET['paso'] === 'codigo' &&
+  isset($_SESSION['esperando_codigo'])
+) {
+  $hayError = (isset($_GET['error']) && $_GET['error'] === '1');
+  ?>
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border <?php echo $hayError ? 'border-red-300' : 'border-gray-300'; ?> space-y-4">
+    <h2 class="text-xl font-bold text-center <?php echo $hayError ? 'text-red-600' : 'text-[#942934]'; ?>">
+      <?php echo $hayError ? '❌ Código incorrecto' : '📩 Verificación de código'; ?>
+    </h2>
+
+    <?php if ($hayError): ?>
+      <p class="text-sm text-center text-red-600">El código no es válido. Intenta nuevamente.</p>
+    <?php endif; ?>
+
+    <form method="POST" class="space-y-4" autocomplete="off">
+      <input
+        type="text"
+        name="codigo"
+        maxlength="6"
+        inputmode="numeric"
+        pattern="\d{6}"
+        placeholder="Código recibido en tu correo"
+        required
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57]"
+        autocomplete="one-time-code"
+      />
+      <button type="submit"
+        class="w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]">
+        Ver comunicación
       </button>
     </form>
-  </div>";
+  </div>
+  <?php
   exit;
 }
+?>
 
-// Paso 4: Validar código
+// Paso 4: Validar código (PRG)
 if (isset($_POST['codigo'])) {
-  if ($_POST['codigo'] !== $_SESSION['codigo_verificacion']) {
-    echo "<div class='bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-red-300 space-y-4'>
-      <h2 class='text-xl font-bold text-center text-[#942934]'>❌ Código incorrecto</h2>
-      <p class='text-sm text-center text-red-600'>El código que ingresaste no es válido. Por favor, verifica e intenta nuevamente.</p>
-      <form method='POST' class='space-y-4'>
-        <input type='text' name='codigo' maxlength='6' placeholder='Código recibido en tu correo' required
-          class='w-full border border-gray-300 rounded-lg px-4 py-2 placeholder:text-gray-500 placeholder:font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d32f57]' />
-        <button type='submit'
-          class='w-full bg-[#942934] hover:bg-[#d32f57] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.98]'>
-          Ver denuncia
-        </button>
-      </form>
-    </div>";
+  $idActual = isset($_SESSION['id_denuncia']) ? $_SESSION['id_denuncia'] : null;
+  $codigoOk = (isset($_SESSION['codigo_verificacion']) && $_POST['codigo'] === $_SESSION['codigo_verificacion']);
+
+  if (!$codigoOk || !$idActual) {
+    // Código inválido -> redirigimos a GET (PRG) con error
+    header('Location: ver_estado.php?paso=codigo&id=' . urlencode($idActual ? $idActual : 0) . '&error=1');
     exit;
   }
 
-  // Código correcto
-  $_SESSION['verificado'] = true;
-  $id = $_SESSION['id_denuncia'];
-  $_GET['id'] = $id;
+  // Código correcto -> marcar verificado con ventana de gracia
+  $_SESSION['verificado']       = true;
+  $_SESSION['verificado_id']    = $idActual;
+  $_SESSION['verificado_until'] = time() + ($GRACE_MINUTES * 60);
 
-  // Limpiar sesión
-  unset($_SESSION['codigo_verificacion']);
-  unset($_SESSION['id_denuncia']);
-  unset($_SESSION['correo_denunciante']);
-  unset($_SESSION['esperando_codigo']);
-}
+  // Limpia datos de verificación ya usados
+  unset($_SESSION['codigo_verificacion'], $_SESSION['esperando_codigo']);
 
-// Paso 5: Verificación obligatoria
-if (!isset($_SESSION['verificado']) || $_SESSION['verificado'] !== true) {
-  header("Location: ver_estado.php");
+  // PRG a la vista por GET
+  header('Location: ver_estado.php?id=' . urlencode($idActual));
   exit;
 }
 
+// Paso 5: Verificación obligatoria (con ventana de gracia)
+$id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+
+if (!$id) {
+  // aquí va tu formulario inicial de ID + correo y un "exit;"
+  // ...
+  exit;
+}
+
+if (verificacion_vigente($id)) {
+  // cada visita renueva la gracia
+  renovar_gracia($GRACE_MINUTES);
+} else {
+  // no verificado o expirado -> ir a pedir código
+  header('Location: ver_estado.php?paso=codigo&id=' . urlencode($id));
+  exit;
+}
+
+
 // Paso 6: Mostrar denuncia
-// El resto de tu código para mostrar los datos, respuestas y archivos ya está bien y se mantiene intacto.
-// ⬇️ En el próximo mensaje te pego desde aquí para no cortarlo.
 $id = $_GET['id'];
 
 $stmt = $conn->prepare("SELECT * FROM denuncias WHERE id = ?");
