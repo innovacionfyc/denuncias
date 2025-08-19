@@ -102,9 +102,10 @@ if (isset($_POST['verificar'])) {
     <p>Este código es válido por unos minutos.</p>
   ";
   $correoDenuncia->sendConfirmacion($denuncia['nombre'], $correo, $id, $asunto, $mensaje);
+  header("Location: ver_estado.php?paso=codigo&id=" . urlencode($id));
+  exit;
 }
 
-<?php
 // Paso 3: Mostrar formulario para ingresar código (solo si estamos en paso=codigo)
 if (
   isset($_GET['paso']) && $_GET['paso'] === 'codigo' &&
@@ -144,6 +145,7 @@ if (
 }
 ?>
 
+<?php
 // Paso 4: Validar código (PRG)
 if (isset($_POST['codigo'])) {
   $idActual = isset($_SESSION['id_denuncia']) ? $_SESSION['id_denuncia'] : null;
@@ -172,23 +174,22 @@ if (isset($_POST['codigo'])) {
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
 if (!$id) {
-  // aquí va tu formulario inicial de ID + correo y un "exit;"
-  // ...
+  // Si no hay id, vuelve al inicio del flujo
+  header('Location: ver_estado.php');
   exit;
 }
 
 if (verificacion_vigente($id)) {
-  // cada visita renueva la gracia
-  renovar_gracia($GRACE_MINUTES);
+  renovar_gracia($GRACE_MINUTES); // renueva la ventana de gracia
 } else {
-  // no verificado o expirado -> ir a pedir código
   header('Location: ver_estado.php?paso=codigo&id=' . urlencode($id));
   exit;
 }
 
 
+
 // Paso 6: Mostrar denuncia
-$id = $_GET['id'];
+$id = (int)$_GET['id'];
 
 $stmt = $conn->prepare("SELECT * FROM denuncias WHERE id = ?");
 $stmt->bind_param("i", $id);
