@@ -29,13 +29,13 @@
       <select name="proceso" required
         class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 font-medium transition-all duration-300 focus:ring-2 focus:ring-[#d32f57]">
         <option value="" disabled selected>Selecciona un proceso</option>
-        <option value="Talento Humano">Talento Humano</option>
-        <option value="Administrativo">Administrativo</option>
-        <option value="Operaciones">Operaciones</option>
-        <option value="Financiero">Financiero</option>
-        <option value="Comercial">Comercial</option>
-        <option value="Logística">Logística</option>
-        <option value="Dirección General">Dirección General</option>
+        <option value="Proceso Comercial">Proceso Comercial</option>
+        <option value="Proceso Logístico">Proceso Logístico</option>
+        <option value="Proceso de Innovación y Desarrollo">Proceso de Innovación y Desarrollo</option>
+        <option value="Proceso RRHH">Proceso RRHH</option>
+        <option value="Proceso Contabilidad">Proceso Contabilidad</option>
+        <option value="Proceso Comunicaciones y Marketing">Proceso Comunicaciones y Marketing</option>
+        <option value="Proceso de Sistema Integrado de Gestión">Proceso de Sistema Integrado de Gestión</option>
       </select>
 
       <input type="text" name="cargo" placeholder="Cargo" required
@@ -137,18 +137,37 @@
     const ctx = canvas.getContext("2d");
     let dibujando = false;
 
-    // Configuración común
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#000";
+    // ⚙️ Ajusta canvas interno al tamaño en pantalla y DPR
+    function ajustarCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
 
-    // Coordenadas con corrección
+      // Tamaño real de pixeles del canvas
+      canvas.width  = Math.round(rect.width  * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+
+      // Escala el contexto para que 1 unidad = 1px CSS
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Estilos del trazo
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#000";
+    }
+
+    // 🧭 Coordenadas precisas (soporta zoom y DPR)
     function getPosicion(event) {
       const rect = canvas.getBoundingClientRect();
-      const tipo = event.type.includes('touch') ? event.touches[0] : event;
+      const dpr = window.devicePixelRatio || 1;
+      const tipo = event.type && event.type.includes('touch') ? event.touches[0] : event;
+
+      // Escalas para convertir de px de pantalla a coords del canvas (post-transform)
+      const scaleX = (canvas.width  / dpr) / rect.width;
+      const scaleY = (canvas.height / dpr) / rect.height;
+
       return {
-        x: tipo.clientX - rect.left,
-        y: tipo.clientY - rect.top
+        x: (tipo.clientX - rect.left) * scaleX,
+        y: (tipo.clientY - rect.top)  * scaleY
       };
     }
 
@@ -161,7 +180,7 @@
 
     function terminarDibujo() {
       dibujando = false;
-      ctx.beginPath(); // reinicia el path para el siguiente trazo
+      ctx.beginPath(); // listo para el siguiente trazo
     }
 
     function dibujar(event) {
@@ -173,25 +192,36 @@
     }
 
     function limpiarFirma() {
+      // Limpia usando el tamaño actual del canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.beginPath();
     }
 
     function capturarFirma() {
+      // Exporta como dataURL del tamaño correcto
       document.getElementById("firmaInput").value = canvas.toDataURL();
     }
 
-    // Listeners para mouse
+    // Listeners mouse
     canvas.addEventListener("mousedown", empezarDibujo);
     canvas.addEventListener("mouseup", terminarDibujo);
-    canvas.addEventListener("mouseout", terminarDibujo);
+    canvas.addEventListener("mouseleave", terminarDibujo);
     canvas.addEventListener("mousemove", dibujar);
 
-    // Listeners para táctil
-    canvas.addEventListener("touchstart", empezarDibujo);
-    canvas.addEventListener("touchend", terminarDibujo);
-    canvas.addEventListener("touchcancel", terminarDibujo);
-    canvas.addEventListener("touchmove", dibujar);
+    // Listeners táctil (con passive:false para poder preventDefault)
+    canvas.addEventListener("touchstart", (e) => { e.preventDefault(); empezarDibujo(e); }, { passive: false });
+    canvas.addEventListener("touchend",   (e) => { e.preventDefault(); terminarDibujo(e); }, { passive: false });
+    canvas.addEventListener("touchcancel",(e) => { e.preventDefault(); terminarDibujo(e); }, { passive: false });
+    canvas.addEventListener("touchmove",  (e) => { e.preventDefault(); dibujar(e); },       { passive: false });
+
+    // Reajusta al cargar y al redimensionar
+    window.addEventListener("resize", ajustarCanvas);
+    // Si usas modales o tabs que cambian tamaño, puedes llamar ajustarCanvas() al abrirlos.
+    ajustarCanvas();
+
+    // Exponer funciones si las llamas desde el HTML
+    window.limpiarFirma = limpiarFirma;
+    window.capturarFirma = capturarFirma;
   </script>
 
 </body>
