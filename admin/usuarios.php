@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 
         $ins = $conn->prepare("INSERT INTO usuarios (usuario, correo, contrasena, rol, activo, fecha_creacion)
                            VALUES (?,?,?,?,?, NOW())");
-        $ins->bind_param("sssii", $usuario, $correo, $hash, $rol, $activo);
+        $ins->bind_param("ssssi", $usuario, $correo, $hash, $rol, $activo);
         if ($ins->execute()) {
             $mensaje = "✅ Usuario creado.";
         } else {
