@@ -1,53 +1,83 @@
 <?php
 // admin/reset_sistema.php
+// --- Protección inline (sin _auth.php) ---
 session_start();
-require_once __DIR__ . '/_auth.php';
-require_admin();
+if (!isset($_SESSION['usuario']) || ($_SESSION['rol'] ?? '') !== 'admin') {
+    header("Location: login.php");
+    exit;
+}
+
 require_once __DIR__ . '/../db/conexion.php';
 
-// Carpeta donde guardas los uploads (ajusta si usas otra ruta)
+// Carpeta donde guardas los uploads (ajústala si usas otra)
 $uploadDir = __DIR__ . '/../uploads';
+
+$msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['confirmar'] ?? '') === 'SI') {
 
+    // Habilita/ajusta si necesitas ver errores durante pruebas:
+    // ini_set('display_errors', 1);
+    // ini_set('display_startup_errors', 1);
+    // error_reporting(E_ALL);
+
     $conn->begin_transaction();
+
     try {
-        // 1. Traer y eliminar archivos del disco
-        $res = $conn->query("SELECT ruta FROM archivos");
-        while ($row = $res->fetch_assoc()) {
-            $path = __DIR__ . '/../' . ltrim($row['ruta'], '/');
-            if (is_file($path)) {
-                @unlink($path);
+        // 1) Borrar archivos físicos listados en BD (si existe tabla 'archivos' y columna 'ruta')
+        if ($res = $conn->query("SELECT ruta FROM archivos")) {
+            while ($row = $res->fetch_assoc()) {
+                // Ruta absoluta segura
+                $path = __DIR__ . '/../' . ltrim((string) $row['ruta'], '/');
+                if (is_file($path)) {
+                    @unlink($path);
+                }
             }
+            $res->free();
         }
 
-        // 2. Vaciar tablas relacionadas
-        $conn->query("DELETE FROM respuestas");
-        $conn->query("DELETE FROM archivos");
-        $conn->query("DELETE FROM denuncias");
-        $conn->query("DELETE FROM codigos_2fa");
+        // 2) Vaciar tablas (ajusta nombres si difieren en tu esquema)
+        //    Orden recomendado: tablas hijas -> tabla padre
+        if (!$conn->query("DELETE FROM respuestas")) {
+            throw new Exception($conn->error);
+        }
+        if (!$conn->query("DELETE FROM archivos")) {
+            throw new Exception($conn->error);
+        }
+        if (!$conn->query("DELETE FROM denuncias")) {
+            throw new Exception($conn->error);
+        }
+        // Opcional: limpiar códigos 2FA
+        if ($conn->query("SHOW TABLES LIKE 'codigos_2fa'")->num_rows > 0) {
+            if (!$conn->query("DELETE FROM codigos_2fa")) {
+                throw new Exception($conn->error);
+            }
+        }
 
         $conn->commit();
 
-        // 3. (Opcional) Borrar físicamente toda la carpeta uploads
+        // 3) Borrar físicamente TODO el contenido de /uploads (y dejar la carpeta vacía)
         if (is_dir($uploadDir)) {
-            $it = new RecursiveDirectoryIterator($uploadDir, RecursiveDirectoryIterator::SKIP_DOTS);
-            $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+            $it = new \RecursiveDirectoryIterator($uploadDir, \FilesystemIterator::SKIP_DOTS);
+            $files = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::CHILD_FIRST);
             foreach ($files as $file) {
+                $p = $file->getRealPath();
                 if ($file->isDir()) {
-                    @rmdir($file->getRealPath());
+                    @rmdir($p);
                 } else {
-                    @unlink($file->getRealPath());
+                    @unlink($p);
                 }
             }
-            // Mantener la carpeta base vacía
-            @mkdir($uploadDir, 0777, true);
+            // Asegurar que la carpeta base exista de nuevo
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+            }
         }
 
-        $msg = "✅ Sistema reseteado correctamente. Denuncias, respuestas, archivos y códigos 2FA eliminados.";
+        $msg = "✅ Sistema reseteado correctamente. Denuncias, respuestas, archivos (físicos) y códigos 2FA eliminados. Usuarios intactos.";
     } catch (Throwable $e) {
         $conn->rollback();
-        $msg = "❌ Error: " . $e->getMessage();
+        $msg = "❌ Error durante el reset: " . $e->getMessage();
     }
 }
 ?>
@@ -57,26 +87,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['confirmar'] ?? '') === 'SI
 <head>
     <meta charset="UTF-8">
     <title>Resetear sistema</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../assets/css/output.css" rel="stylesheet">
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-8">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-300 w-full max-w-lg space-y-6">
+<body class="bg-[#f8f9fb] min-h-screen flex items-center justify-center p-6">
+    <div class="bg-white border border-gray-300 rounded-2xl shadow-2xl max-w-lg w-full p-8 space-y-6">
         <h1 class="text-2xl font-bold text-[#942934]">⚠️ Resetear sistema</h1>
         <p class="text-gray-700">
-            Esta acción eliminará <b>todas las denuncias, respuestas, archivos subidos (fotos, audios) y códigos
-                2FA</b>.
-            Los <b>usuarios</b> permanecerán intactos.
+            Esta acción eliminará <b>todas</b> las <b>denuncias</b>, <b>respuestas</b>, <b>archivos subidos
+                (fotos/audios)</b> y <b>códigos 2FA</b>.<br>
+            La tabla de <b>usuarios</b> <span class="font-semibold">no se toca</span>.
         </p>
 
         <?php if (!empty($msg)): ?>
             <div
-                class="p-4 rounded-xl <?= str_contains($msg, '✅') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' ?>">
-                <?= $msg ?>
+                class="p-4 rounded-xl <?= (strpos($msg, '✅') !== false) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' ?>">
+                <?= htmlspecialchars($msg, ENT_QUOTES, 'UTF-8') ?>
             </div>
         <?php endif; ?>
 
-        <form method="post" class="space-y-4">
+        <form method="post" class="space-y-3">
             <input type="hidden" name="confirmar" value="SI">
             <button type="submit"
                 class="w-full bg-[#d32f57] hover:bg-[#942934] text-white font-semibold py-3 rounded-xl transition-all duration-300">
@@ -84,8 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['confirmar'] ?? '') === 'SI
             </button>
         </form>
 
-        <a href="dashboard.php" class="block text-center text-[#685f2f] font-semibold hover:underline">⬅️ Volver al
-            dashboard</a>
+        <a href="dashboard.php" class="block text-center text-[#685f2f] font-semibold hover:underline">
+            ⬅️ Volver al dashboard
+        </a>
     </div>
 </body>
 
